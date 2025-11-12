@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.database import SessionLocal
-from app.models import Customers
+from app.models import Customers, User
 from app import schemas
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -16,6 +16,11 @@ def create_customer():
     
     try:
         user_id = get_jwt_identity()
+        is_valid_user = db.query(User).filter(User.id == user_id).first()
+        
+        if not is_valid_user:
+            return jsonify({"message": "unauthorized"}), 401
+            
         data = schemas.customer_schema.load(request.json)
         
         new_customer =  Customers(**data, created_by=user_id)
@@ -30,13 +35,15 @@ def create_customer():
     except ValidationError as err:
         return err.messages, 400
     
+
     except IntegrityError :
         db.rollback()
-        return jsonify({"message": "Customer with this email already exists"}), 409
+        return jsonify({"message": "Customer with this contact info already exists"}), 409
     
-    except IntegrityError :
+    
+    except Exception as e :
         db.rollback()
-        return jsonify({"message": "Internal server error"}), 500
+        return jsonify({"message": "Internal server error","error":str(e)}), 500
     
     finally:
         db.close()
@@ -83,7 +90,10 @@ def update_customer(customer_id):
      
     except ValidationError as err:
         return err.messages, 400
-     
+    except IntegrityError :
+        db.rollback()
+        return jsonify({"message": "Something went wrong"}), 409
+
     except Exception as e:
         db.rollback()
         return jsonify({"message": "Internal server error", "error":e}), 500

@@ -51,7 +51,7 @@ class Loan(Base,TimeStamp):
     risk_score = Column(Numeric(3,2), nullable=False)
     status = Column(Enum(LoanStatus), nullable=False, default=LoanStatus.PENDING)
     __table_args__ = (CheckConstraint('amount > 0', name='amount must be greater than zero'),CheckConstraint('term_months >= 1', name='term months should be greater than or equals to 1'),CheckConstraint('income >= 0', name='amount must be greater than or equals to  zero'),CheckConstraint('expenses >= 0', name='expenses must be greater than  or equals to zero'))
-
+    
     
 
 

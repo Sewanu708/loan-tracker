@@ -22,13 +22,16 @@ def register():
         password_hash = ph.hash(data['password'])
         user_object = db.query(User)
         if (user_object.count() == 0):
-            new_user = User(email=data['email'], password=password_hash)
+            new_user = User(email=data['email'], password=password_hash, is_admin = True)
             db.add(new_user)
         else:
             verify_jwt_in_request()
             user_id = get_jwt_identity()
             if not user_id:
                 return jsonify({"message": "Unauthorized"}), 401
+            is_admin = user_object.filter(User.is_admin == True , User.id == user_id).first()
+            if not is_admin:
+                return jsonify({"message": "Unauthorized, Request admin access"}), 401
             existing_user = user_object.filter_by(email=data['email']).first()
             if existing_user:
                 return jsonify({"message": "User this email already exists"}), 409
