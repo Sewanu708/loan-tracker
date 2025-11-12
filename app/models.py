@@ -18,7 +18,7 @@ class User(Base,TimeStamp):
     id = Column(UUID(as_uuid=True),primary_key=True, nullable=False, default= uuid.uuid4)
     is_admin = Column(Boolean, default=False)  
     email = Column(String, unique=True,nullable=False)  
-    password = Column(String, nullable=False)  
+    password_hash = Column(String, nullable=False)  
     created_at = Column(TIMESTAMP(timezone=True),nullable=False,server_default=text("now()"))
 
     
@@ -51,7 +51,7 @@ class Loan(Base,TimeStamp):
     risk_score = Column(Numeric(3,2), nullable=False)
     status = Column(Enum(LoanStatus), nullable=False, default=LoanStatus.PENDING)
     __table_args__ = (CheckConstraint('amount > 0', name='amount must be greater than zero'),CheckConstraint('term_months >= 1', name='term months should be greater than or equals to 1'),CheckConstraint('income >= 0', name='amount must be greater than or equals to  zero'),CheckConstraint('expenses >= 0', name='expenses must be greater than  or equals to zero'))
-    
+
     
 
 

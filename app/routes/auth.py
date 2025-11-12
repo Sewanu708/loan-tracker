@@ -22,7 +22,7 @@ def register():
         password_hash = ph.hash(data['password'])
         user_object = db.query(User)
         if (user_object.count() == 0):
-            new_user = User(email=data['email'], password=password_hash, is_admin = True)
+            new_user = User(email=data['email'], password_hash=password_hash, is_admin = True)
             db.add(new_user)
         else:
             verify_jwt_in_request()
@@ -37,7 +37,7 @@ def register():
                 return jsonify({"message": "User this email already exists"}), 409
             
             
-            new_user = User(email=data['email'], password=password_hash)
+            new_user = User(email=data['email'], password_hash=password_hash)
             db.add(new_user)
             
         db.commit()
@@ -69,8 +69,10 @@ def login():
         user = db.query(User).filter(User.email == email).first()
         if not user:
             return jsonify({"message":"Invalid Credentials"}), 401
-        
-        is_verified = ph.verify(password=password,hash=user.password)
+        try:
+            is_verified = ph.verify(user.password_hash,password)
+        except VerifyMismatchError:
+            return jsonify({"message": "Invalid Credentials"}), 401
         
         if not is_verified:
              return jsonify({"message":"Invalid Credentials"}), 401
@@ -81,10 +83,9 @@ def login():
     
     except ValidationError as err:
         return err.messages, 400
-    
+        
     except Exception as e:
         db.rollback()
-        return jsonify({"message": "Internal server error", "error":e}), 500
-    
+        return jsonify({"message": "Internal server error", "error":str(e)}), 500
     finally:
         db.close()

@@ -3,6 +3,7 @@ from app.database import SessionLocal
 from marshmallow import ValidationError
 from flask_jwt_extended import jwt_required,get_jwt_identity
 from app import schemas
+from datetime import datetime , timedelta
 from app.models import  Loan, Customers, User
 from app.services import risk
 from sqlalchemy.exc import IntegrityError
@@ -53,14 +54,61 @@ def get_loans():
     db = SessionLocal()
     
     try:
+        
         user_id = get_jwt_identity()
         is_valid_user = db.query(User).filter(User.id == user_id).first()
         
         if not is_valid_user:
             return jsonify({"message": "unauthorized"}), 401
+        
+        # status=&min_amount=&max_amount=&from=&to=&page=&page_size=
+        page = request.args.get('page', 1, int)
+        limit = request.args.get('page_size', 10, int)
+        page_size = min(limit, 100) 
+        skip = (page-1)*page_size
+        
+        status = request.args.get('status', type=str)
+        min_amount  = request.args.get('min_amount', type=int)
+        max_amount = request.args.get('max_amount', type=int)
+        to_date = request.args.get('to', type=str)
+        from_date = request.args.get('from', type=str)
+        
+        loan_query = db.query(Loan)
+        
+        if (status):
+            status_enum = Loan.LoanStatus(status.upper())
+            loan_query=loan_query.filter(Loan.status == status_enum)
+        if (  min_amount is not None) :
+            loan_query=loan_query.filter(Loan.amount >= min_amount)
             
-        loans = db.query(Loan).all()
-        return schemas.loan_response_schema.dump(loans)
+        if (max_amount  is not None ):
+            loan_query=loan_query.filter(Loan.amount <= max_amount)
+        
+        if (from_date):
+            try:
+               formatted_date = datetime.strptime(from_date,"%Y-%m-%d") 
+               loan_query = loan_query.filter(Loan.created_at >= formatted_date) 
+            except ValueError:
+                return jsonify({"message": "Invalid from_date format, use YYYY-MM-DD"}), 400
+            
+        if (to_date):
+            try:
+                formatted_date = datetime.strptime(to_date,"%Y-%m-%d") 
+                loan_query=loan_query.filter(Loan.created_at <= (formatted_date + timedelta(days=1))) 
+            except ValueError:
+                return jsonify({"message": "Invalid from_date format, use YYYY-MM-DD"}), 400
+            
+        total_count = loan_query.count()
+        loan_query = loan_query.offset(skip).limit(page_size)
+            
+        loans = loan_query.all()
+        response = jsonify(schemas.loan_response_schema.dump(loans))
+         
+        response.headers['X-Total-Count'] = total_count
+        response.headers['X-Page'] = page
+        response.headers['X-Page-Size'] = page_size
+        
+        return response, 200
     
     
     except Exception as e:
