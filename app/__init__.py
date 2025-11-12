@@ -3,11 +3,12 @@ from .config import Config
 from flask_jwt_extended import JWTManager
 from .routes import health,auth,customers, loans, reports
 from marshmallow import ValidationError
+from flask_cors import CORS
 def create_app():
     app = Flask(__name__)
     
     app.config.from_object(Config)    
-    
+    CORS(app)
     jwt = JWTManager(app)
     
     app.register_blueprint(health.bp)  
