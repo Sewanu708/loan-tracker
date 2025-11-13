@@ -1,13 +1,13 @@
-from flask import Blueprint, request, jsonify
+from flask import  request, jsonify
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from app.database import SessionLocal 
 from app.models import User
-from app.schemas import user_register_schema, user_login_schema
+from app.schemas import user_register_schema, user_login_schema,token_schema
 from marshmallow import ValidationError
 from flask_jwt_extended import create_access_token, get_jwt_identity,verify_jwt_in_request
 from sqlalchemy.exc import IntegrityError
-
+from flask_smorest import Blueprint
 
 bp = Blueprint('auth', __name__)
 ph = PasswordHasher()
@@ -15,10 +15,12 @@ ph = PasswordHasher()
 
 
 @bp.route('/register', methods=["POST"])
-def register():
+@bp.arguments(user_register_schema)
+@bp.response(201,description="User registered successfully")
+def register(data):
     db = SessionLocal() 
     try:
-        data = user_register_schema.load(request.json)
+        # data = user_register_schema.load(request.json)
         password_hash = ph.hash(data['password'])
         user_object = db.query(User)
         if (user_object.count() == 0):
@@ -57,12 +59,13 @@ def register():
     
     finally:
         db.close()
-        
+
 @bp.route('/login',methods=["POST"])
-def login():
+@bp.arguments(user_login_schema) 
+@bp.response(200, token_schema)
+def login(data):
     db = SessionLocal()
     try:
-        data = user_login_schema.load(request.json)
         email = data['email']
         password = data['password']
         

@@ -1,4 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import  jsonify
+from flask_smorest import Blueprint
+
 
 bp = Blueprint('health',__name__)
 

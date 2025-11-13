@@ -3,6 +3,7 @@ from .config import Config
 from flask_jwt_extended import JWTManager
 from .routes import health,auth,customers, loans, reports
 from marshmallow import ValidationError
+from flask_smorest import Api
 from flask_cors import CORS
 def create_app():
     app = Flask(__name__)
@@ -10,12 +11,12 @@ def create_app():
     app.config.from_object(Config)    
     CORS(app)
     jwt = JWTManager(app)
-    
-    app.register_blueprint(health.bp)  
-    app.register_blueprint(auth.bp, url_prefix="/auth") 
-    app.register_blueprint(customers.bp, url_prefix="/customers") 
-    app.register_blueprint(loans.bp, url_prefix="/loans") 
-    app.register_blueprint(reports.bp, url_prefix="/reports") 
+    api = Api(app)
+    api.register_blueprint(health.bp)  
+    api.register_blueprint(auth.bp, url_prefix="/auth") 
+    api.register_blueprint(customers.bp, url_prefix="/customers") 
+    api.register_blueprint(loans.bp, url_prefix="/loans") 
+    api.register_blueprint(reports.bp, url_prefix="/reports") 
     
     @app.errorhandler(ValidationError)
     def handle_validation_error(err):

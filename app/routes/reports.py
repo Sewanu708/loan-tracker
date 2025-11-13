@@ -1,9 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import  request, jsonify
 from flask_jwt_extended import jwt_required
 from app.database import SessionLocal
 from sqlalchemy import case, func
 from app.models import Loan
 from datetime import datetime, timedelta
+from flask_smorest import Blueprint
 
 bp = Blueprint('reports',__name__)
 

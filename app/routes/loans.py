@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import request, jsonify
 from app.database import SessionLocal
 from marshmallow import ValidationError
 from flask_jwt_extended import jwt_required,get_jwt_identity
@@ -7,18 +7,20 @@ from datetime import datetime , timedelta
 from app.models import  Loan, Customers, User
 from app.services import risk
 from sqlalchemy.exc import IntegrityError
-
+from flask_smorest import Blueprint
 
 bp = Blueprint('loans',__name__)
 
 
 @bp.route('/',methods=['POST'])
+@bp.arguments(schemas.create_loan_schema)
+@bp.response(201, schemas.loan_unique_response_schema)
 @jwt_required()
-def create_loan():
+def create_loan(data):
     db = SessionLocal()
     
     try:
-        data = schemas.create_loan_schema.load(request.json)
+        # data = schemas.create_loan_schema.load(request.json)
         customer = db.query(Customers).filter(Customers.id == data['customer_id']).first()
         if not customer:
             return jsonify({"message":"Customer not found"}), 404
@@ -49,6 +51,7 @@ def create_loan():
         
         
 @bp.route('/',methods=['GET'])
+@bp.response(200, schemas.loan_response_schema)
 @jwt_required()
 def get_loans():
     db = SessionLocal()
@@ -120,6 +123,7 @@ def get_loans():
         
         
 @bp.route('/<uuid:loan_id>',methods=['GET'])
+@bp.response(200, schemas.loan_unique_response_schema)
 @jwt_required()
 def get_loan(loan_id):
     db = SessionLocal()
@@ -145,8 +149,10 @@ def get_loan(loan_id):
         db.close()
         
 @bp.route('/<uuid:loan_id>',methods=['PATCH'])
+@bp.arguments(schemas.loan_update_schema)
+@bp.response(200, schemas.loan_unique_response_schema)
 @jwt_required()
-def update_loan(loan_id):
+def update_loan(data,loan_id):
     db = SessionLocal()
     try:
         user_id = get_jwt_identity()
@@ -157,7 +163,7 @@ def update_loan(loan_id):
         # initialize query
         loan_query = db.query(Loan).filter(Loan.id == loan_id)
          # load data
-        data = schemas.loan_update_schema.load(request.json)
+        # data = schemas.loan_update_schema.load(request.json)
         # fetch loan
         loan = loan_query.first()
         

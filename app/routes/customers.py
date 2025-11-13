@@ -1,17 +1,20 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.database import SessionLocal
 from app.models import Customers, User
 from app import schemas
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
+from flask_smorest import Blueprint
 
 bp = Blueprint('customers',__name__)
 
 
 @bp.route('/', methods=["POST"])
+@bp.arguments(schemas.customer_schema)
+@bp.response(201, schemas.customer_schema)
 @jwt_required()
-def create_customer():
+def create_customer(data):
     db = SessionLocal()
     
     try:
@@ -21,7 +24,7 @@ def create_customer():
         if not is_valid_user:
             return jsonify({"message": "unauthorized"}), 401
             
-        data = schemas.customer_schema.load(request.json)
+        # data = schemas.customer_schema.load(request.json)
         
         new_customer =  Customers(**data, created_by=user_id)
         
@@ -50,6 +53,7 @@ def create_customer():
     
     
 @bp.route('/', methods=["GET"])
+@bp.response(200, schemas.customer_list_schema)
 @jwt_required()   
 def get_customers():
     db = SessionLocal()
@@ -60,7 +64,7 @@ def get_customers():
             return []
 
         
-         return schemas.customer_list_schema.dump(customers)
+         return jsonify(schemas.customer_list_schema.dump(customers)), 200
      
     except Exception:
         return jsonify({"message": "Internal server error"}), 500
@@ -71,11 +75,13 @@ def get_customers():
         
     
 @bp.route('/<uuid:customer_id>', methods=["PATCH"])
+@bp.arguments(schemas.customer_update_schema)
+@bp.response(200, schemas.customer_schema)
 @jwt_required()   
-def update_customer(customer_id):
+def update_customer(data,customer_id):
     db = SessionLocal()
     try:
-         data = schemas.customer_update_schema.load(request.json)
+        #  data = schemas.customer_update_schema.load(request.json)
          customer_query = db.query(Customers).filter(Customers.id == customer_id)
          customer = customer_query.first()
          if not customer:
@@ -102,6 +108,7 @@ def update_customer(customer_id):
         db.close()
         
 @bp.route('/<uuid:customer_id>', methods=["DELETE"])
+# @bp.response(204, schemas.customer_schema)
 @jwt_required()   
 def delete_customer(customer_id):
     db = SessionLocal()

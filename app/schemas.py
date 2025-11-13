@@ -4,7 +4,11 @@ from .models import Customers, User, Loan
 class UserRegsiterSchema(Schema):
     email = fields.Email(required=True)
     password = fields.Str(required=True, validate=validate.Length(min=8, error="Password must be equals or greater than 8 letters"))
-    
+
+class TokenSchema(Schema):
+    access_token = fields.Str(dump_only=True)
+
+
     
 class UserLoginSchema(Schema):
     email = fields.Email(required=True)
@@ -61,3 +65,4 @@ create_loan_schema = CreateLoanSchema()
 loan_unique_response_schema = LoanResponseSchema()
 loan_response_schema = LoanResponseSchema(many=True)
 loan_update_schema = UpdateLoanSchema()
+token_schema = TokenSchema()
