@@ -8,8 +8,8 @@ db_url = os.getenv("DATABASE_URL")
 if not db_url:
     raise ValueError("No DATABASE_URL set for the application")
 
-if db_url.startswith("postgresql://"):
-    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+# if db_url.startswith("postgresql://"):
+#     db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
     
 print("This is your database url", db_url)
 
