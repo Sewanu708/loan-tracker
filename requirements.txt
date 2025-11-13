@@ -18,8 +18,7 @@ MarkupSafe==3.0.3
 marshmallow==4.1.0
 packaging==25.0
 pluggy==1.6.0
-psycopg==3.2.12
-psycopg-binary==3.2.12
+psycopg2-binary
 pycparser==2.23
 Pygments==2.19.2
 PyJWT==2.10.1
