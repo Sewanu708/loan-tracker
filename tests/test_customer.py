@@ -19,14 +19,14 @@ def test_create_customer(client, admin_auth_headers):
     assert response.json["email"] == "play.customer@example.com"
     assert "id" in response.json
 
-def test_get_customer_unauthorized(client):
+def test_get_customers_unauthorized(client): # Renamed for clarity
     """
     GIVEN: No auth
-    WHEN:  We send a POST to /customers
+    WHEN:  We send a GET to /customers/
     THEN:  We should get a 401 Unauthorized
     """
-    payload = {"first_name": "test"}
-    response = client.post('/customers/', json=payload)
+    response = client.get('/customers/')
+    
     assert response.status_code == 401
     assert "Missing Authorization Header" in response.json["msg"]
 

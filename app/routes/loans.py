@@ -13,9 +13,10 @@ bp = Blueprint('loans',__name__)
 
 
 @bp.route('/',methods=['POST'])
+@jwt_required()
 @bp.arguments(schemas.create_loan_schema)
 @bp.response(201, schemas.loan_unique_response_schema)
-@jwt_required()
+
 def create_loan(data):
     db = SessionLocal()
     
@@ -32,7 +33,7 @@ def create_loan(data):
         
         db.refresh(new_loan)
         
-        return schemas.loan_unique_response_schema.dump(new_loan), 201
+        return new_loan, 201
     
     except ValidationError as e:
         db.rollback()
@@ -51,8 +52,8 @@ def create_loan(data):
         
         
 @bp.route('/',methods=['GET'])
-@bp.response(200, schemas.loan_response_schema)
 @jwt_required()
+@bp.response(200, schemas.loan_response_schema)
 def get_loans():
     db = SessionLocal()
     
@@ -123,8 +124,8 @@ def get_loans():
         
         
 @bp.route('/<uuid:loan_id>',methods=['GET'])
-@bp.response(200, schemas.loan_unique_response_schema)
 @jwt_required()
+@bp.response(200, schemas.loan_unique_response_schema)
 def get_loan(loan_id):
     db = SessionLocal()
     try:
@@ -139,7 +140,7 @@ def get_loan(loan_id):
         if not loan:
             return {"message":"Loan details not found"}, 404
         
-        return schemas.loan_unique_response_schema.dump(loan)
+        return loan, 200
     
     except Exception as e:
         db.rollback()
@@ -149,9 +150,9 @@ def get_loan(loan_id):
         db.close()
         
 @bp.route('/<uuid:loan_id>',methods=['PATCH'])
+@jwt_required()
 @bp.arguments(schemas.loan_update_schema)
 @bp.response(200, schemas.loan_unique_response_schema)
-@jwt_required()
 def update_loan(data,loan_id):
     db = SessionLocal()
     try:
@@ -192,7 +193,7 @@ def update_loan(data,loan_id):
         
         db.refresh(loan)
         
-        return schemas.loan_unique_response_schema.dump(loan), 200
+        return loan, 200
     
     except ValidationError as e:
         db.rollback()
